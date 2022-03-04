@@ -69,6 +69,15 @@ TEST_F(RoutePlannerTest, TestNodeDistanceHelper) {
     EXPECT_GT(d1, 0.0f);
 }
 
+TEST_F(RoutePlannerTest, TestCompareFunction) {
+    start_node->g_value = 1.0f;
+    start_node->h_value = 2.0f;
+    end_node->g_value = 0.5f;
+    end_node->h_value = 0.5f;
+    EXPECT_TRUE(Compare(start_node, end_node));
+    EXPECT_FALSE(Compare(end_node, start_node));
+}
+
 // Test the CalculateHValue method.
 TEST_F(RoutePlannerTest, TestCalculateHValue) {
     EXPECT_FLOAT_EQ(route_planner.CalculateHValue(start_node), 1.1329799);

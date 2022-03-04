@@ -30,4 +30,6 @@ class RoutePlanner {
     RouteModel &m_Model;
 };
 
+bool Compare(const RouteModel::Node *a, RouteModel::Node *b);
+
 #endif
