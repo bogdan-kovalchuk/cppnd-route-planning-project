@@ -61,6 +61,14 @@ class RoutePlannerTest : public ::testing::Test {
 };
 
 
+TEST_F(RoutePlannerTest, TestNodeDistanceHelper) {
+    EXPECT_FLOAT_EQ(start_node->distance(*start_node), 0.0f);
+    float d1 = start_node->distance(*end_node);
+    float d2 = end_node->distance(*start_node);
+    EXPECT_FLOAT_EQ(d1, d2);
+    EXPECT_GT(d1, 0.0f);
+}
+
 // Test the CalculateHValue method.
 TEST_F(RoutePlannerTest, TestCalculateHValue) {
     EXPECT_FLOAT_EQ(route_planner.CalculateHValue(start_node), 1.1329799);
