@@ -124,6 +124,14 @@ TEST_F(RoutePlannerTest, TestConstructFinalPath) {
 }
 
 
+TEST_F(RoutePlannerTest, TestConstructFinalPathDistance) {
+    mid_node->parent = start_node;
+    end_node->parent = mid_node;
+    float expected_dist = (mid_node->distance(*start_node) + end_node->distance(*mid_node)) * model.MetricScale();
+    std::vector<RouteModel::Node> path = route_planner.ConstructFinalPath(end_node);
+    EXPECT_FLOAT_EQ(route_planner.GetDistance(), expected_dist);
+}
+
 // Test the AStarSearch method.
 TEST_F(RoutePlannerTest, TestAStarSearch) {
     route_planner.AStarSearch();
