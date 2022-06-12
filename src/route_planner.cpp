@@ -57,6 +57,7 @@ bool Compare(const RouteModel::Node *a, RouteModel::Node *b) {
 // - Return the pointer.
 
 RouteModel::Node *RoutePlanner::NextNode() {
+    if (open_list.empty()) return nullptr;
     RouteModel::Node *current = nullptr;
     sort(open_list.begin(), open_list.end(), Compare);
     current = open_list.back();
