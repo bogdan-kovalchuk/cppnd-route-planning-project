@@ -79,6 +79,7 @@ std::vector<RouteModel::Node> RoutePlanner::ConstructFinalPath(RouteModel::Node 
     std::vector<RouteModel::Node> path_found;
     while (current_node != start_node) {
         path_found.insert(path_found.begin(), *current_node);
+        if (!current_node->parent) break;
         distance += current_node->distance(*current_node->parent);
         current_node = current_node->parent;
     }
