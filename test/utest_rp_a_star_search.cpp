@@ -141,6 +141,13 @@ TEST_F(RoutePlannerTest, TestFindClosestNodeValid) {
     EXPECT_LE(node.y, 1.0f);
 }
 
+TEST_F(RoutePlannerTest, TestAddNeighborsVisitedFlag) {
+    route_planner.AddNeighbors(mid_node);
+    for (auto neighbor : mid_node->neighbors) {
+        EXPECT_TRUE(neighbor->visited);
+    }
+}
+
 TEST_F(RoutePlannerTest, TestAStarSearch) {
     route_planner.AStarSearch();
     EXPECT_EQ(model.path.size(), 33);
