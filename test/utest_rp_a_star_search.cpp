@@ -133,6 +133,14 @@ TEST_F(RoutePlannerTest, TestConstructFinalPathDistance) {
 }
 
 // Test the AStarSearch method.
+TEST_F(RoutePlannerTest, TestFindClosestNodeValid) {
+    RouteModel::Node &node = model.FindClosestNode(0.5f, 0.5f);
+    EXPECT_GE(node.x, 0.0f);
+    EXPECT_LE(node.x, 1.0f);
+    EXPECT_GE(node.y, 0.0f);
+    EXPECT_LE(node.y, 1.0f);
+}
+
 TEST_F(RoutePlannerTest, TestAStarSearch) {
     route_planner.AStarSearch();
     EXPECT_EQ(model.path.size(), 33);
