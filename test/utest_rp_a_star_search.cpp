@@ -148,6 +148,12 @@ TEST_F(RoutePlannerTest, TestAddNeighborsVisitedFlag) {
     }
 }
 
+TEST_F(RoutePlannerTest, TestAStarPathConnectivity) {
+    route_planner.AStarSearch();
+    EXPECT_GE(model.path.size(), 2);
+    EXPECT_GT(route_planner.GetDistance(), 0.0f);
+}
+
 TEST_F(RoutePlannerTest, TestAStarSearch) {
     route_planner.AStarSearch();
     EXPECT_EQ(model.path.size(), 33);
