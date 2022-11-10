@@ -1,5 +1,6 @@
 #include "route_planner.h"
 #include <algorithm>
+#include <limits>
 
 RoutePlanner::RoutePlanner(RouteModel &model, float start_x, float start_y, float end_x, float end_y) : m_Model(model) {
     // Convert inputs to percentage:
@@ -99,7 +100,15 @@ std::vector<RouteModel::Node> RoutePlanner::ConstructFinalPath(RouteModel::Node 
 
 void RoutePlanner::AStarSearch() {
     RouteModel::Node *current_node = nullptr;
+    for (auto &node : m_Model.SNodes()) {
+        node.visited = false;
+        node.g_value = 0.0;
+        node.h_value = std::numeric_limits<float>::max();
+        node.parent = nullptr;
+        node.neighbors.clear();
+    }
     start_node->visited = true;
+    open_list.clear();
     open_list.push_back(start_node);
     while (!open_list.empty()) {
         // Get the next node
