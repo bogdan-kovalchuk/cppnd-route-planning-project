@@ -164,6 +164,11 @@ TEST_F(RoutePlannerTest, TestAStarDistanceMatchesPath) {
     EXPECT_FLOAT_EQ(route_planner.GetDistance(), manual_dist);
 }
 
+TEST_F(RoutePlannerTest, TestRouteModelNodeCount) {
+    EXPECT_EQ(model.SNodes().size(), model.Nodes().size());
+    EXPECT_GT(model.SNodes().size(), 0);
+}
+
 TEST_F(RoutePlannerTest, TestAStarSearch) {
     route_planner.AStarSearch();
     EXPECT_EQ(model.path.size(), 33);
