@@ -117,6 +117,10 @@ void RoutePlanner::AStarSearch() {
         node.parent = nullptr;
         node.neighbors.clear();
     }
+    // Clear any path left over from a prior search so a failed or
+    // disconnected search does not report a stale result as current.
+    m_Model.path.clear();
+    distance = 0.0f;
     start_node->visited = true;
     open_list.clear();
     open_list.push_back(start_node);
