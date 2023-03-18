@@ -35,6 +35,16 @@ std::vector<std::byte> ReadOSMData(const std::string &path) {
     return osm_data;
 }
 
+// Converts an inline OSM XML fixture into the byte buffer the Model
+// constructor expects, so edge cases can be exercised without map.osm.
+static std::vector<std::byte> ToBytes(const std::string &text) {
+    std::vector<std::byte> bytes(text.size());
+    for (size_t i = 0; i < text.size(); i++) {
+        bytes[i] = static_cast<std::byte>(text[i]);
+    }
+    return bytes;
+}
+
 //--------------------------------//
 //   Beginning RoutePlanner Tests.
 //--------------------------------//
@@ -261,4 +271,42 @@ TEST_F(RoutePlannerTest, TestPathDistanceMatchesSearch) {
     route_planner.AStarSearch();
     float manual = PathDistance(model.path) * model.MetricScale();
     EXPECT_FLOAT_EQ(route_planner.GetDistance(), manual);
+}
+
+//------------------------------------------------//
+//   Synthetic-map tests (disconnected/edge maps).
+//------------------------------------------------//
+
+static const char *kTwoIslandsOsm =
+    "<?xml version='1.0'?><osm>"
+    "<bounds minlat='0' minlon='0' maxlat='1' maxlon='1'/>"
+    "<node id='1' lat='0.10' lon='0.10'/>"
+    "<node id='2' lat='0.15' lon='0.15'/>"
+    "<node id='3' lat='0.20' lon='0.20'/>"
+    "<node id='10' lat='0.60' lon='0.60'/>"
+    "<node id='11' lat='0.65' lon='0.65'/>"
+    "<node id='20' lat='0.90' lon='0.90'/>"
+    "<node id='21' lat='0.95' lon='0.95'/>"
+    "<way id='100'><nd ref='1'/><nd ref='2'/><nd ref='3'/>"
+    "<tag k='highway' v='residential'/></way>"
+    "<way id='101'><nd ref='10'/><nd ref='11'/>"
+    "<tag k='highway' v='residential'/></way>"
+    "<way id='102'><nd ref='20'/><nd ref='21'/>"
+    "<tag k='highway' v='residential'/></way>"
+    "</osm>";
+
+// A search that fails to reach the end node must not leave the path
+// (or distance) from a previous, successful search in place.
+TEST(RoutePlannerSyntheticTest, RepeatedSearchClearsStalePath) {
+    RouteModel model(ToBytes(kTwoIslandsOsm));
+
+    RoutePlanner connected_planner(model, 10, 10, 20, 20);
+    connected_planner.AStarSearch();
+    ASSERT_GE(model.path.size(), 2u);
+    ASSERT_GT(connected_planner.GetDistance(), 0.0f);
+
+    RoutePlanner disconnected_planner(model, 60, 60, 90, 90);
+    disconnected_planner.AStarSearch();
+    EXPECT_TRUE(model.path.empty());
+    EXPECT_FLOAT_EQ(disconnected_planner.GetDistance(), 0.0f);
 }
