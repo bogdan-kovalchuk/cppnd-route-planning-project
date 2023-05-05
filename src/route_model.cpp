@@ -1,5 +1,6 @@
 #include "route_model.h"
 #include <iostream>
+#include <stdexcept>
 
 RouteModel::RouteModel(const std::vector<std::byte> &xml) : Model(xml) {
     // Create RouteModel nodes.
@@ -54,6 +55,9 @@ void RouteModel::Node::FindNeighbors() {
 
 
 RouteModel::Node &RouteModel::FindClosestNode(float x, float y) {
+    if (SNodes().empty())
+        throw std::logic_error("RouteModel has no nodes to search");
+
     Node input;
     input.x = x;
     input.y = y;
