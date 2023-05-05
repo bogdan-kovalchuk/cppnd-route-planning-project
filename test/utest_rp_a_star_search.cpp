@@ -2,6 +2,7 @@
 #include <fstream>
 #include <iostream>
 #include <optional>
+#include <stdexcept>
 #include <vector>
 #include "../src/route_model.h"
 #include "../src/route_planner.h"
@@ -309,4 +310,16 @@ TEST(RoutePlannerSyntheticTest, RepeatedSearchClearsStalePath) {
     disconnected_planner.AStarSearch();
     EXPECT_TRUE(model.path.empty());
     EXPECT_FLOAT_EQ(disconnected_planner.GetDistance(), 0.0f);
+}
+
+static const char *kEmptyOsm =
+    "<?xml version='1.0'?><osm>"
+    "<bounds minlat='0' minlon='0' maxlat='1' maxlon='1'/>"
+    "</osm>";
+
+// A map with valid bounds but no road nodes has nothing to search;
+// FindClosestNode must report that instead of indexing an empty vector.
+TEST(RoutePlannerSyntheticTest, FindClosestNodeThrowsWhenNoNodes) {
+    RouteModel model(ToBytes(kEmptyOsm));
+    EXPECT_THROW(model.FindClosestNode(0.5f, 0.5f), std::logic_error);
 }
