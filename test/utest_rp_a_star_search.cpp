@@ -323,3 +323,11 @@ TEST(RoutePlannerSyntheticTest, FindClosestNodeThrowsWhenNoNodes) {
     RouteModel model(ToBytes(kEmptyOsm));
     EXPECT_THROW(model.FindClosestNode(0.5f, 0.5f), std::logic_error);
 }
+
+// The Model constructor requires a <bounds> element to establish the
+// coordinate frame; a map without one must fail fast rather than build
+// a model with an undefined metric scale.
+TEST(RoutePlannerSyntheticTest, ModelThrowsWhenBoundsMissing) {
+    static const char *kNoBoundsOsm = "<?xml version='1.0'?><osm></osm>";
+    EXPECT_THROW(RouteModel model(ToBytes(kNoBoundsOsm)), std::logic_error);
+}
