@@ -169,6 +169,13 @@ TEST_F(RoutePlannerTest, TestRouteModelNodeCount) {
     EXPECT_GT(model.SNodes().size(), 0);
 }
 
+TEST_F(RoutePlannerTest, TestGValueAccumulation) {
+    route_planner.AStarSearch();
+    for (size_t i = 1; i < model.path.size(); i++) {
+        EXPECT_GE(model.path[i].g_value, model.path[i-1].g_value);
+    }
+}
+
 TEST_F(RoutePlannerTest, TestAStarSearch) {
     route_planner.AStarSearch();
     EXPECT_EQ(model.path.size(), 33);
