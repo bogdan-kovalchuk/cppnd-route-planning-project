@@ -176,6 +176,15 @@ TEST_F(RoutePlannerTest, TestGValueAccumulation) {
     }
 }
 
+TEST_F(RoutePlannerTest, TestMetricScaleInDistance) {
+    route_planner.AStarSearch();
+    float raw_dist = 0.0f;
+    for (size_t i = 1; i < model.path.size(); i++) {
+        raw_dist += model.path[i].distance(model.path[i-1]);
+    }
+    EXPECT_FLOAT_EQ(route_planner.GetDistance(), raw_dist * model.MetricScale());
+}
+
 TEST_F(RoutePlannerTest, TestAStarSearch) {
     route_planner.AStarSearch();
     EXPECT_EQ(model.path.size(), 33);
