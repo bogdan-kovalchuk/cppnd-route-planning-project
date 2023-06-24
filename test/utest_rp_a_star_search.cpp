@@ -331,3 +331,10 @@ TEST(RoutePlannerSyntheticTest, ModelThrowsWhenBoundsMissing) {
     static const char *kNoBoundsOsm = "<?xml version='1.0'?><osm></osm>";
     EXPECT_THROW(RouteModel model(ToBytes(kNoBoundsOsm)), std::logic_error);
 }
+
+// Truncated/unparseable XML must be rejected up front rather than
+// silently producing a partially built model.
+TEST(RoutePlannerSyntheticTest, ModelThrowsOnMalformedXml) {
+    static const char *kMalformedXml = "<osm><bounds minlat='0'";
+    EXPECT_THROW(RouteModel model(ToBytes(kMalformedXml)), std::logic_error);
+}
