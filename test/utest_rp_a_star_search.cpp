@@ -383,3 +383,20 @@ TEST(RoutePlannerSyntheticTest, DanglingNodeRefIsDroppedFromWay) {
     EXPECT_EQ(model.Ways()[0].nodes[0], 0);
     EXPECT_EQ(model.Ways()[0].nodes[1], 1);
 }
+
+// A way with a single node has no other node to link to; FindNeighbor's
+// self-exclusion (distance != 0) must prevent it from becoming its own
+// neighbor rather than looping back on itself.
+TEST(RoutePlannerSyntheticTest, SingleNodeWayHasNoNeighbors) {
+    static const char *kSingleNodeWayOsm =
+        "<?xml version='1.0'?><osm>"
+        "<bounds minlat='0' minlon='0' maxlat='1' maxlon='1'/>"
+        "<node id='1' lat='0.10' lon='0.10'/>"
+        "<way id='100'><nd ref='1'/>"
+        "<tag k='highway' v='residential'/></way>"
+        "</osm>";
+    RouteModel model(ToBytes(kSingleNodeWayOsm));
+    ASSERT_EQ(model.SNodes().size(), 1u);
+    model.SNodes()[0].FindNeighbors();
+    EXPECT_TRUE(model.SNodes()[0].neighbors.empty());
+}
