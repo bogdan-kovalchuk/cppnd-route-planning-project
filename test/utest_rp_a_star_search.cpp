@@ -1,4 +1,5 @@
 #include "gtest/gtest.h"
+#include <cmath>
 #include <fstream>
 #include <iostream>
 #include <optional>
@@ -337,4 +338,29 @@ TEST(RoutePlannerSyntheticTest, ModelThrowsWhenBoundsMissing) {
 TEST(RoutePlannerSyntheticTest, ModelThrowsOnMalformedXml) {
     static const char *kMalformedXml = "<osm><bounds minlat='0'";
     EXPECT_THROW(RouteModel model(ToBytes(kMalformedXml)), std::logic_error);
+}
+
+// AdjustCoordinates normalizes every node relative to the map bounds and
+// scales by the smaller of the projected width/height (MetricScale), so
+// the min-bound node must land exactly at the origin and the max-bound
+// node must sit exactly on the unit boundary along at least one axis.
+TEST(RoutePlannerSyntheticTest, AdjustCoordinatesNormalizesToUnitBox) {
+    static const char *kBoundsOsm =
+        "<?xml version='1.0'?><osm>"
+        "<bounds minlat='0' minlon='0' maxlat='0.01' maxlon='0.02'/>"
+        "<node id='1' lat='0' lon='0'/>"
+        "<node id='2' lat='0.01' lon='0.02'/>"
+        "</osm>";
+    RouteModel model(ToBytes(kBoundsOsm));
+    ASSERT_EQ(model.Nodes().size(), 2u);
+
+    const auto &min_corner = model.Nodes()[0];
+    const auto &max_corner = model.Nodes()[1];
+
+    EXPECT_FLOAT_EQ(min_corner.x, 0.0f);
+    EXPECT_FLOAT_EQ(min_corner.y, 0.0f);
+    EXPECT_GT(model.MetricScale(), 0.0);
+    EXPECT_GE(max_corner.x, 0.0);
+    EXPECT_GE(max_corner.y, 0.0);
+    EXPECT_TRUE(std::abs(max_corner.x - 1.0) < 1e-4 || std::abs(max_corner.y - 1.0) < 1e-4);
 }
