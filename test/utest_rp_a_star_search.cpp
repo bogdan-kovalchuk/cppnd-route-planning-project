@@ -364,3 +364,22 @@ TEST(RoutePlannerSyntheticTest, AdjustCoordinatesNormalizesToUnitBox) {
     EXPECT_GE(max_corner.y, 0.0);
     EXPECT_TRUE(std::abs(max_corner.x - 1.0) < 1e-4 || std::abs(max_corner.y - 1.0) < 1e-4);
 }
+
+// A <nd ref> that does not match any parsed node id (e.g. a way that
+// references a node outside the extracted bounding box) must be dropped
+// from the way instead of crashing or inserting a bogus index.
+TEST(RoutePlannerSyntheticTest, DanglingNodeRefIsDroppedFromWay) {
+    static const char *kDanglingRefOsm =
+        "<?xml version='1.0'?><osm>"
+        "<bounds minlat='0' minlon='0' maxlat='1' maxlon='1'/>"
+        "<node id='1' lat='0.10' lon='0.10'/>"
+        "<node id='2' lat='0.20' lon='0.20'/>"
+        "<way id='100'><nd ref='1'/><nd ref='999'/><nd ref='2'/>"
+        "<tag k='highway' v='residential'/></way>"
+        "</osm>";
+    RouteModel model(ToBytes(kDanglingRefOsm));
+    ASSERT_EQ(model.Ways().size(), 1u);
+    EXPECT_EQ(model.Ways()[0].nodes.size(), 2u);
+    EXPECT_EQ(model.Ways()[0].nodes[0], 0);
+    EXPECT_EQ(model.Ways()[0].nodes[1], 1);
+}
