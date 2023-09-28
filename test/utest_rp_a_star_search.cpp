@@ -1,4 +1,5 @@
 #include "gtest/gtest.h"
+#include <algorithm>
 #include <cmath>
 #include <fstream>
 #include <iostream>
@@ -278,6 +279,30 @@ TEST_F(RoutePlannerTest, TestPathDistanceMatchesSearch) {
 // Running AStarSearch again on the same planner/model must reset all
 // node state cleanly and reproduce the identical path and distance,
 // not merely a path of the same length.
+// When several open-list nodes share the same FValue, NextNode's sort
+// and pop must still drain each of them exactly once without crashing
+// or dropping/duplicating an entry.
+TEST_F(RoutePlannerTest, TestNextNodeHandlesTiedFValues) {
+    route_planner.AddNeighbors(start_node);
+    auto neighbors = start_node->neighbors;
+    ASSERT_GT(neighbors.size(), 1u);
+    for (auto *n : neighbors) {
+        n->g_value = 1.0f;
+        n->h_value = 1.0f;
+    }
+
+    std::vector<RouteModel::Node*> drained;
+    for (size_t i = 0; i < neighbors.size(); i++) {
+        RouteModel::Node *next = route_planner.NextNode();
+        ASSERT_NE(next, nullptr);
+        drained.push_back(next);
+    }
+
+    for (auto *n : neighbors) {
+        EXPECT_EQ(std::count(drained.begin(), drained.end(), n), 1);
+    }
+}
+
 TEST_F(RoutePlannerTest, TestAStarSearchIsIdempotent) {
     route_planner.AStarSearch();
     std::vector<RouteModel::Node> first_path = model.path;
