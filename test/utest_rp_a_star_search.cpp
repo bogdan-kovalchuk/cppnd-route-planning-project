@@ -275,6 +275,23 @@ TEST_F(RoutePlannerTest, TestPathDistanceMatchesSearch) {
     EXPECT_FLOAT_EQ(route_planner.GetDistance(), manual);
 }
 
+// Running AStarSearch again on the same planner/model must reset all
+// node state cleanly and reproduce the identical path and distance,
+// not merely a path of the same length.
+TEST_F(RoutePlannerTest, TestAStarSearchIsIdempotent) {
+    route_planner.AStarSearch();
+    std::vector<RouteModel::Node> first_path = model.path;
+    float first_distance = route_planner.GetDistance();
+
+    route_planner.AStarSearch();
+    ASSERT_EQ(model.path.size(), first_path.size());
+    EXPECT_FLOAT_EQ(route_planner.GetDistance(), first_distance);
+    for (size_t i = 0; i < model.path.size(); i++) {
+        EXPECT_FLOAT_EQ(model.path[i].x, first_path[i].x);
+        EXPECT_FLOAT_EQ(model.path[i].y, first_path[i].y);
+    }
+}
+
 //------------------------------------------------//
 //   Synthetic-map tests (disconnected/edge maps).
 //------------------------------------------------//
