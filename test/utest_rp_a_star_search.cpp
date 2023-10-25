@@ -185,6 +185,13 @@ TEST_F(RoutePlannerTest, TestMetricScaleInDistance) {
     EXPECT_FLOAT_EQ(route_planner.GetDistance(), raw_dist * model.MetricScale());
 }
 
+TEST_F(RoutePlannerTest, TestAStarSameStartEnd) {
+    RoutePlanner trivial_planner{model, 50, 50, 50, 50};
+    trivial_planner.AStarSearch();
+    EXPECT_EQ(model.path.size(), 1);
+    EXPECT_FLOAT_EQ(trivial_planner.GetDistance(), 0.0f);
+}
+
 TEST_F(RoutePlannerTest, TestAStarSearch) {
     route_planner.AStarSearch();
     EXPECT_EQ(model.path.size(), 33);
