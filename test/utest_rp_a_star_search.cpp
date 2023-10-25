@@ -192,6 +192,14 @@ TEST_F(RoutePlannerTest, TestAStarSameStartEnd) {
     EXPECT_FLOAT_EQ(trivial_planner.GetDistance(), 0.0f);
 }
 
+TEST_F(RoutePlannerTest, TestConstructFinalPathSingleNode) {
+    std::vector<RouteModel::Node> path = route_planner.ConstructFinalPath(start_node);
+    EXPECT_EQ(path.size(), 1);
+    EXPECT_FLOAT_EQ(path[0].x, start_node->x);
+    EXPECT_FLOAT_EQ(path[0].y, start_node->y);
+    EXPECT_FLOAT_EQ(route_planner.GetDistance(), 0.0f);
+}
+
 TEST_F(RoutePlannerTest, TestAStarSearch) {
     route_planner.AStarSearch();
     EXPECT_EQ(model.path.size(), 33);
