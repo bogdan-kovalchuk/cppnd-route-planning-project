@@ -279,6 +279,26 @@ TEST_F(RoutePlannerTest, TestPathDistanceMatchesSearch) {
 // Running AStarSearch again on the same planner/model must reset all
 // node state cleanly and reproduce the identical path and distance,
 // not merely a path of the same length.
+// Footway ways are excluded from the node-to-road hashmap used by
+// FindNeighbors, so two nodes joined only by a footway must not become
+// routable neighbors of each other.
+TEST(RoutePlannerSyntheticTest, FootwayIsExcludedFromNeighborGraph) {
+    static const char *kFootwayOsm =
+        "<?xml version='1.0'?><osm>"
+        "<bounds minlat='0' minlon='0' maxlat='1' maxlon='1'/>"
+        "<node id='1' lat='0.10' lon='0.10'/>"
+        "<node id='2' lat='0.20' lon='0.20'/>"
+        "<way id='100'><nd ref='1'/><nd ref='2'/>"
+        "<tag k='highway' v='footway'/></way>"
+        "</osm>";
+    RouteModel model(ToBytes(kFootwayOsm));
+    ASSERT_EQ(model.Roads().size(), 1u);
+    EXPECT_EQ(model.Roads()[0].type, Model::Road::Footway);
+
+    model.SNodes()[0].FindNeighbors();
+    EXPECT_TRUE(model.SNodes()[0].neighbors.empty());
+}
+
 // When several open-list nodes share the same FValue, NextNode's sort
 // and pop must still drain each of them exactly once without crashing
 // or dropping/duplicating an entry.
