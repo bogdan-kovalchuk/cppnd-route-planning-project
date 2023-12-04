@@ -30,7 +30,7 @@ class RoutePlanner {
     RouteModel &m_Model;
 };
 
-bool Compare(const RouteModel::Node *a, RouteModel::Node *b);
+bool Compare(const RouteModel::Node *a, const RouteModel::Node *b);
 float FValue(const RouteModel::Node *node);
 float PathDistance(const std::vector<RouteModel::Node> &path);
 

@@ -147,7 +147,6 @@ void Model::LoadData(const std::vector<std::byte> &xml)
     
     for( const auto &relation: doc.select_nodes("/osm/relation") ) {
         auto node = relation.node();
-        auto noode_id = std::string_view{node.attribute("id").as_string()};
         std::vector<int> outer, inner;
         auto commit = [&](Multipolygon &mp) {
             mp.outer = std::move(outer);
@@ -215,7 +214,7 @@ static bool TrackRec(const std::vector<int> &open_ways,
                      std::vector<int> &nodes) 
 {
     if( nodes.empty() ) {
-        for( int i = 0; i < open_ways.size(); ++i )
+        for( std::size_t i = 0; i < open_ways.size(); ++i )
             if( !used[i] ) {
                 used[i] = true;
                 const auto &way_nodes = ways[open_ways[i]].nodes;
@@ -232,7 +231,7 @@ static bool TrackRec(const std::vector<int> &open_ways,
         const auto tail = nodes.back();
         if( head == tail && nodes.size() > 1 )
             return true;
-        for( int i = 0; i < open_ways.size(); ++i )
+        for( std::size_t i = 0; i < open_ways.size(); ++i )
             if( !used[i] ) {
                 const auto &way_nodes = ways[open_ways[i]].nodes;
                 const auto way_head = way_nodes.front();
@@ -260,7 +259,7 @@ static std::vector<int> Track(std::vector<int> &open_ways, const Model::Way *way
     std::vector<bool> used(open_ways.size(), false);
     std::vector<int> nodes;    
     if( TrackRec(open_ways, ways, used, nodes) )
-        for( int i = 0; i < open_ways.size(); ++i )
+        for( std::size_t i = 0; i < open_ways.size(); ++i )
             if( used[i] )
                 open_ways[i] = -1;
     return nodes;

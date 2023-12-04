@@ -24,7 +24,7 @@ static std::optional<std::vector<std::byte>> ReadFile(const std::string &path)
 
     if( contents.empty() )
         return std::nullopt;
-    return std::move(contents);
+    return contents;
 }
 
 std::vector<std::byte> ReadOSMData(const std::string &path) {
@@ -103,20 +103,21 @@ TEST_F(RoutePlannerTest, TestCalculateHValue) {
 // Test the AddNeighbors method.
 bool NodesSame(RouteModel::Node* a, RouteModel::Node* b) { return a == b; }
 TEST_F(RoutePlannerTest, TestAddNeighbors) {
+    start_node->g_value = 0.0f;
     route_planner.AddNeighbors(start_node);
 
     // Correct h and g values for the neighbors of start_node.
     std::vector<float> start_neighbor_g_vals{0.10671431, 0.082997195, 0.051776856, 0.055291083};
     std::vector<float> start_neighbor_h_vals{1.1828455, 1.0998145, 1.0858033, 1.1831238};
     auto neighbors = start_node->neighbors;
-    EXPECT_EQ(neighbors.size(), 4);
+    EXPECT_EQ(neighbors.size(), 4u);
 
     // Check results for each neighbor.
-    for (int i = 0; i < neighbors.size(); i++) {
+    for (std::size_t i = 0; i < neighbors.size(); i++) {
         EXPECT_PRED2(NodesSame, neighbors[i]->parent, start_node);
         EXPECT_FLOAT_EQ(neighbors[i]->g_value, start_neighbor_g_vals[i]);
         EXPECT_FLOAT_EQ(neighbors[i]->h_value, start_neighbor_h_vals[i]);
-        EXPECT_EQ(neighbors[i]->visited, true);
+        EXPECT_FALSE(neighbors[i]->visited);
     }
 }
 
@@ -129,7 +130,7 @@ TEST_F(RoutePlannerTest, TestConstructFinalPath) {
     std::vector<RouteModel::Node> path = route_planner.ConstructFinalPath(end_node);
 
     // Test the path.
-    EXPECT_EQ(path.size(), 3);
+    EXPECT_EQ(path.size(), 3u);
     EXPECT_FLOAT_EQ(start_node->x, path.front().x);
     EXPECT_FLOAT_EQ(start_node->y, path.front().y);
     EXPECT_FLOAT_EQ(end_node->x, path.back().x);
@@ -154,16 +155,18 @@ TEST_F(RoutePlannerTest, TestFindClosestNodeValid) {
     EXPECT_LE(node.y, 1.0f);
 }
 
-TEST_F(RoutePlannerTest, TestAddNeighborsVisitedFlag) {
+TEST_F(RoutePlannerTest, TestAddNeighborsKeepsOpenNodesUnvisited) {
+    mid_node->g_value = 0.0f;
     route_planner.AddNeighbors(mid_node);
     for (auto neighbor : mid_node->neighbors) {
-        EXPECT_TRUE(neighbor->visited);
+        EXPECT_FALSE(neighbor->visited);
+        EXPECT_TRUE(std::isfinite(neighbor->g_value));
     }
 }
 
 TEST_F(RoutePlannerTest, TestAStarPathConnectivity) {
     route_planner.AStarSearch();
-    EXPECT_GE(model.path.size(), 2);
+    EXPECT_GE(model.path.size(), 2u);
     EXPECT_GT(route_planner.GetDistance(), 0.0f);
 }
 
@@ -179,7 +182,7 @@ TEST_F(RoutePlannerTest, TestAStarDistanceMatchesPath) {
 
 TEST_F(RoutePlannerTest, TestRouteModelNodeCount) {
     EXPECT_EQ(model.SNodes().size(), model.Nodes().size());
-    EXPECT_GT(model.SNodes().size(), 0);
+    EXPECT_GT(model.SNodes().size(), 0u);
 }
 
 TEST_F(RoutePlannerTest, TestGValueAccumulation) {
@@ -201,13 +204,13 @@ TEST_F(RoutePlannerTest, TestMetricScaleInDistance) {
 TEST_F(RoutePlannerTest, TestAStarSameStartEnd) {
     RoutePlanner trivial_planner{model, 50, 50, 50, 50};
     trivial_planner.AStarSearch();
-    EXPECT_EQ(model.path.size(), 1);
+    EXPECT_EQ(model.path.size(), 1u);
     EXPECT_FLOAT_EQ(trivial_planner.GetDistance(), 0.0f);
 }
 
 TEST_F(RoutePlannerTest, TestConstructFinalPathSingleNode) {
     std::vector<RouteModel::Node> path = route_planner.ConstructFinalPath(start_node);
-    EXPECT_EQ(path.size(), 1);
+    EXPECT_EQ(path.size(), 1u);
     EXPECT_FLOAT_EQ(path[0].x, start_node->x);
     EXPECT_FLOAT_EQ(path[0].y, start_node->y);
     EXPECT_FLOAT_EQ(route_planner.GetDistance(), 0.0f);
@@ -224,7 +227,7 @@ TEST_F(RoutePlannerTest, TestAddNeighborsGValue) {
 
 TEST_F(RoutePlannerTest, TestAStarPathOrdering) {
     route_planner.AStarSearch();
-    EXPECT_GE(model.path.size(), 2);
+    EXPECT_GE(model.path.size(), 2u);
     EXPECT_FLOAT_EQ(model.path.front().x, start_node->x);
     EXPECT_FLOAT_EQ(model.path.front().y, start_node->y);
     EXPECT_FLOAT_EQ(model.path.back().x, end_node->x);
@@ -233,7 +236,7 @@ TEST_F(RoutePlannerTest, TestAStarPathOrdering) {
 
 TEST_F(RoutePlannerTest, TestAStarSearch) {
     route_planner.AStarSearch();
-    EXPECT_EQ(model.path.size(), 33);
+    EXPECT_EQ(model.path.size(), 34u);
     RouteModel::Node path_start = model.path.front();
     RouteModel::Node path_end = model.path.back();
     // The start_node and end_node x, y values should be the same as in the path.
@@ -241,7 +244,7 @@ TEST_F(RoutePlannerTest, TestAStarSearch) {
     EXPECT_FLOAT_EQ(start_node->y, path_start.y);
     EXPECT_FLOAT_EQ(end_node->x, path_end.x);
     EXPECT_FLOAT_EQ(end_node->y, path_end.y);
-    EXPECT_FLOAT_EQ(route_planner.GetDistance(), 873.41565);
+    EXPECT_FLOAT_EQ(route_planner.GetDistance(), 872.61725f);
 }
 
 TEST_F(RoutePlannerTest, TestFValueComputation) {
@@ -276,9 +279,19 @@ TEST_F(RoutePlannerTest, TestPathDistanceMatchesSearch) {
     EXPECT_FLOAT_EQ(route_planner.GetDistance(), manual);
 }
 
-// Running AStarSearch again on the same planner/model must reset all
-// node state cleanly and reproduce the identical path and distance,
-// not merely a path of the same length.
+// PathDistance's segment summation is exercised elsewhere only against
+// search-derived paths; this pins its behavior against a hand-built path
+// with known Euclidean segment lengths, independent of AStarSearch.
+TEST(RoutePlannerSyntheticTest, PathDistanceSumsKnownSegmentLengths) {
+    RouteModel::Node a, b, c, d;
+    a.x = 0.0; a.y = 0.0;
+    b.x = 1.0; b.y = 0.0;
+    c.x = 1.0; c.y = 1.0;
+    d.x = 2.0; d.y = 1.0;
+    std::vector<RouteModel::Node> path{a, b, c, d};
+    EXPECT_FLOAT_EQ(PathDistance(path), 3.0f);
+}
+
 // Footway ways are excluded from the node-to-road hashmap used by
 // FindNeighbors, so two nodes joined only by a footway must not become
 // routable neighbors of each other.
@@ -297,6 +310,7 @@ TEST(RoutePlannerSyntheticTest, FootwayIsExcludedFromNeighborGraph) {
 
     model.SNodes()[0].FindNeighbors();
     EXPECT_TRUE(model.SNodes()[0].neighbors.empty());
+    EXPECT_THROW(model.FindClosestNode(0.1f, 0.1f), std::logic_error);
 }
 
 // A landuse relation whose member ways cannot be joined into a closed
@@ -323,10 +337,10 @@ TEST(RoutePlannerSyntheticTest, BuildRingsDropsUnclosableRing) {
     EXPECT_TRUE(model.Landuses()[0].outer.empty());
 }
 
-// When several open-list nodes share the same FValue, NextNode's sort
-// and pop must still drain each of them exactly once without crashing
-// or dropping/duplicating an entry.
+// When several open-list nodes share the same FValue, NextNode uses the
+// stable model index as an explicit tie-break and drains them in that order.
 TEST_F(RoutePlannerTest, TestNextNodeHandlesTiedFValues) {
+    start_node->g_value = 0.0f;
     route_planner.AddNeighbors(start_node);
     auto neighbors = start_node->neighbors;
     ASSERT_GT(neighbors.size(), 1u);
@@ -335,6 +349,14 @@ TEST_F(RoutePlannerTest, TestNextNodeHandlesTiedFValues) {
         n->h_value = 1.0f;
     }
 
+    auto expected = neighbors;
+    std::sort(expected.begin(), expected.end(), [](const auto *left,
+                                                   const auto *right) {
+        return left->Index() < right->Index();
+    });
+    ASSERT_TRUE(Compare(expected.back(), expected.front()));
+    ASSERT_FALSE(Compare(expected.front(), expected.back()));
+
     std::vector<RouteModel::Node*> drained;
     for (size_t i = 0; i < neighbors.size(); i++) {
         RouteModel::Node *next = route_planner.NextNode();
@@ -342,9 +364,7 @@ TEST_F(RoutePlannerTest, TestNextNodeHandlesTiedFValues) {
         drained.push_back(next);
     }
 
-    for (auto *n : neighbors) {
-        EXPECT_EQ(std::count(drained.begin(), drained.end(), n), 1);
-    }
+    EXPECT_EQ(drained, expected);
 }
 
 // RouteModel::Node(idx, this, node) copies each Model::Node into
@@ -423,6 +443,18 @@ TEST(RoutePlannerSyntheticTest, FindClosestNodeThrowsWhenNoNodes) {
     EXPECT_THROW(model.FindClosestNode(0.5f, 0.5f), std::logic_error);
 }
 
+// Nodes that do not belong to a routable road are not valid route endpoints.
+TEST(RoutePlannerSyntheticTest, FindClosestNodeThrowsWhenNoRoutableRoadExists) {
+    static const char *kNodeOnlyOsm =
+        "<?xml version='1.0'?><osm>"
+        "<bounds minlat='0' minlon='0' maxlat='1' maxlon='1'/>"
+        "<node id='1' lat='0.25' lon='0.25'/>"
+        "</osm>";
+    RouteModel model(ToBytes(kNodeOnlyOsm));
+    ASSERT_EQ(model.SNodes().size(), 1u);
+    EXPECT_THROW(model.FindClosestNode(0.25f, 0.25f), std::logic_error);
+}
+
 // The Model constructor requires a <bounds> element to establish the
 // coordinate frame; a map without one must fail fast rather than build
 // a model with an undefined metric scale.
@@ -497,4 +529,49 @@ TEST(RoutePlannerSyntheticTest, SingleNodeWayHasNoNeighbors) {
     ASSERT_EQ(model.SNodes().size(), 1u);
     model.SNodes()[0].FindNeighbors();
     EXPECT_TRUE(model.SNodes()[0].neighbors.empty());
+}
+
+// The first route to node N is deliberately longer than a route discovered
+// one expansion later. Correct A* must relax N while it is still open.
+TEST(RoutePlannerSyntheticTest, AStarRelaxesAnOpenNodeToTheOptimalRoute) {
+    static const char *kRelaxationOsm =
+        "<?xml version='1.0'?><osm>"
+        "<bounds minlat='0' minlon='0' maxlat='0.01' maxlon='0.01'/>"
+        "<node id='1' lat='0.002' lon='0.010'/>"   // start
+        "<node id='2' lat='0.001' lon='0.010'/>"   // A
+        "<node id='3' lat='0.001' lon='0.0095'/>"  // B
+        "<node id='4' lat='0.000' lon='0.009'/>"   // N
+        "<node id='5' lat='0.000' lon='0.010'/>"   // goal
+        "<way id='101'><nd ref='1'/><nd ref='2'/>"
+        "<tag k='highway' v='residential'/></way>"
+        "<way id='102'><nd ref='1'/><nd ref='3'/>"
+        "<tag k='highway' v='residential'/></way>"
+        "<way id='103'><nd ref='2'/><nd ref='4'/>"
+        "<tag k='highway' v='residential'/></way>"
+        "<way id='104'><nd ref='3'/><nd ref='4'/>"
+        "<tag k='highway' v='residential'/></way>"
+        "<way id='105'><nd ref='4'/><nd ref='5'/>"
+        "<tag k='highway' v='residential'/></way>"
+        "</osm>";
+
+    RouteModel model(ToBytes(kRelaxationOsm));
+    ASSERT_EQ(model.SNodes().size(), 5u);
+    RoutePlanner planner(model, 100.0f, 20.0f, 100.0f, 0.0f);
+    planner.AStarSearch();
+
+    const auto &nodes = model.SNodes();
+    const float old_suboptimal_cost =
+        (nodes[0].distance(nodes[1]) + nodes[1].distance(nodes[3]) +
+         nodes[3].distance(nodes[4])) * model.MetricScale();
+    const float expected_optimal_cost =
+        (nodes[0].distance(nodes[2]) + nodes[2].distance(nodes[3]) +
+         nodes[3].distance(nodes[4])) * model.MetricScale();
+
+    ASSERT_EQ(model.path.size(), 4u);
+    EXPECT_DOUBLE_EQ(model.path[1].x, nodes[2].x);
+    EXPECT_DOUBLE_EQ(model.path[1].y, nodes[2].y);
+    EXPECT_FLOAT_EQ(planner.GetDistance(), expected_optimal_cost);
+    EXPECT_NEAR(expected_optimal_cost, 180.119f, 0.01f);
+    EXPECT_NEAR(old_suboptimal_cost, 190.034f, 0.01f);
+    EXPECT_GT(old_suboptimal_cost - planner.GetDistance(), 9.0f);
 }

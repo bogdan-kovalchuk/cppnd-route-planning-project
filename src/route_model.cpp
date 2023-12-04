@@ -29,10 +29,9 @@ void RouteModel::CreateNodeToRoadHashmap() {
 
 RouteModel::Node *RouteModel::Node::FindNeighbor(std::vector<int> node_indices) {
     Node *closest_node = nullptr;
-    Node node;
 
     for (int node_index : node_indices) {
-        node = parent_model->SNodes()[node_index];
+        Node &node = parent_model->SNodes()[node_index];
         if (this->distance(node) != 0 && !node.visited) {
             if (closest_node == nullptr || this->distance(node) < this->distance(*closest_node)) {
                 closest_node = &parent_model->SNodes()[node_index];
@@ -64,19 +63,22 @@ RouteModel::Node &RouteModel::FindClosestNode(float x, float y) {
 
     float min_dist = std::numeric_limits<float>::max();
     float dist;
-    int closest_idx = 0;
+    Node *closest_node = nullptr;
 
     for (const Model::Road &road : Roads()) {
         if (road.type != Model::Road::Type::Footway) {
             for (int node_idx : Ways()[road.way].nodes) {
                 dist = input.distance(SNodes()[node_idx]);
                 if (dist < min_dist) {
-                    closest_idx = node_idx;
+                    closest_node = &SNodes()[node_idx];
                     min_dist = dist;
                 }
             }
         }
     }
 
-    return SNodes()[closest_idx];
+    if (closest_node == nullptr)
+        throw std::logic_error("RouteModel has no routable nodes to search");
+
+    return *closest_node;
 }
