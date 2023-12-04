@@ -299,6 +299,30 @@ TEST(RoutePlannerSyntheticTest, FootwayIsExcludedFromNeighborGraph) {
     EXPECT_TRUE(model.SNodes()[0].neighbors.empty());
 }
 
+// A landuse relation whose member ways cannot be joined into a closed
+// loop (no shared endpoints) must be dropped instead of crashing or
+// hanging the ring-building backtrack search.
+TEST(RoutePlannerSyntheticTest, BuildRingsDropsUnclosableRing) {
+    static const char *kOpenRingOsm =
+        "<?xml version='1.0'?><osm>"
+        "<bounds minlat='0' minlon='0' maxlat='1' maxlon='1'/>"
+        "<node id='1' lat='0.10' lon='0.10'/>"
+        "<node id='2' lat='0.15' lon='0.10'/>"
+        "<node id='3' lat='0.50' lon='0.50'/>"
+        "<node id='4' lat='0.55' lon='0.50'/>"
+        "<way id='100'><nd ref='1'/><nd ref='2'/></way>"
+        "<way id='101'><nd ref='3'/><nd ref='4'/></way>"
+        "<relation id='500'>"
+        "<member type='way' ref='100' role='outer'/>"
+        "<member type='way' ref='101' role='outer'/>"
+        "<tag k='landuse' v='grass'/>"
+        "</relation>"
+        "</osm>";
+    RouteModel model(ToBytes(kOpenRingOsm));
+    ASSERT_EQ(model.Landuses().size(), 1u);
+    EXPECT_TRUE(model.Landuses()[0].outer.empty());
+}
+
 // When several open-list nodes share the same FValue, NextNode's sort
 // and pop must still drain each of them exactly once without crashing
 // or dropping/duplicating an entry.
