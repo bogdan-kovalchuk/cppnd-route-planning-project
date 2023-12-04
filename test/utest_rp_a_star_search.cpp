@@ -347,6 +347,18 @@ TEST_F(RoutePlannerTest, TestNextNodeHandlesTiedFValues) {
     }
 }
 
+// RouteModel::Node(idx, this, node) copies each Model::Node into
+// m_Nodes at the same index it held in the base model; every later
+// lookup by index (FindNeighbor, FindClosestNode) depends on that
+// 1:1 correspondence being exact, not just equal in size.
+TEST_F(RoutePlannerTest, TestSNodesPreserveSourceCoordinates) {
+    ASSERT_EQ(model.SNodes().size(), model.Nodes().size());
+    for (size_t i = 0; i < model.Nodes().size(); i++) {
+        EXPECT_DOUBLE_EQ(model.SNodes()[i].x, model.Nodes()[i].x);
+        EXPECT_DOUBLE_EQ(model.SNodes()[i].y, model.Nodes()[i].y);
+    }
+}
+
 TEST_F(RoutePlannerTest, TestAStarSearchIsIdempotent) {
     route_planner.AStarSearch();
     std::vector<RouteModel::Node> first_path = model.path;
