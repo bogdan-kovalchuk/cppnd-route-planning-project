@@ -4,6 +4,9 @@
 #include <string_view>
 #include <cmath>
 #include <algorithm>
+#include <cerrno>
+#include <cstdlib>
+#include <stdexcept>
 #include <assert.h>
 
 static Model::Road::Type String2RoadType(std::string_view type)
@@ -35,6 +38,21 @@ static Model::Landuse::Type String2LanduseType(std::string_view type)
     if( type == "railway" )         return Model::Landuse::Railway;
     if( type == "residential" )     return Model::Landuse::Residential;    
     return Model::Landuse::Invalid;
+}
+
+static double ParseFiniteNumber(const pugi::xml_attribute &attribute,
+                                std::string_view description)
+{
+    const char *text = attribute.as_string();
+    if (!attribute || *text == '\0')
+        throw std::logic_error(std::string(description) + " is missing");
+
+    char *end = nullptr;
+    errno = 0;
+    const double value = std::strtod(text, &end);
+    if (end == text || *end != '\0' || errno == ERANGE || !std::isfinite(value))
+        throw std::logic_error(std::string(description) + " is not a finite number");
+    return value;
 }
 
 const char* Model::RoadTypeToString(Road::Type type)
@@ -74,10 +92,10 @@ void Model::LoadData(const std::vector<std::byte> &xml)
     
     if( auto bounds = doc.select_nodes("/osm/bounds"); !bounds.empty() ) {
         auto node = bounds.first().node();
-        m_MinLat = atof(node.attribute("minlat").as_string());
-        m_MaxLat = atof(node.attribute("maxlat").as_string());
-        m_MinLon = atof(node.attribute("minlon").as_string());
-        m_MaxLon = atof(node.attribute("maxlon").as_string());
+        m_MinLat = ParseFiniteNumber(node.attribute("minlat"), "bounds minlat");
+        m_MaxLat = ParseFiniteNumber(node.attribute("maxlat"), "bounds maxlat");
+        m_MinLon = ParseFiniteNumber(node.attribute("minlon"), "bounds minlon");
+        m_MaxLon = ParseFiniteNumber(node.attribute("maxlon"), "bounds maxlon");
     }
     else 
         throw std::logic_error("map's bounds are not defined");

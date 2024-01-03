@@ -470,6 +470,16 @@ TEST(RoutePlannerSyntheticTest, ModelThrowsOnMalformedXml) {
     EXPECT_THROW(RouteModel model(ToBytes(kMalformedXml)), std::logic_error);
 }
 
+// Bounds establish the coordinate frame, so malformed numeric attributes must
+// be rejected instead of being silently interpreted as zero by the parser.
+TEST(RoutePlannerSyntheticTest, ModelRejectsNonNumericBounds) {
+    static const char *kInvalidBoundsOsm =
+        "<?xml version='1.0'?><osm>"
+        "<bounds minlat='west' minlon='0' maxlat='1' maxlon='1'/>"
+        "</osm>";
+    EXPECT_THROW(RouteModel model(ToBytes(kInvalidBoundsOsm)), std::logic_error);
+}
+
 // AdjustCoordinates normalizes every node relative to the map bounds and
 // scales by the smaller of the projected width/height (MetricScale), so
 // the min-bound node must land exactly at the origin and the max-bound
