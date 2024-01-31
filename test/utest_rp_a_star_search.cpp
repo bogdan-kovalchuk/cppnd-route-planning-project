@@ -480,6 +480,16 @@ TEST(RoutePlannerSyntheticTest, ModelRejectsNonNumericBounds) {
     EXPECT_THROW(RouteModel model(ToBytes(kInvalidBoundsOsm)), std::logic_error);
 }
 
+// Normalization divides by the smaller projected span. A zero-width bounds
+// box would divide every coordinate by zero, so it must fail at the boundary.
+TEST(RoutePlannerSyntheticTest, ModelRejectsDegenerateBounds) {
+    static const char *kDegenerateBoundsOsm =
+        "<?xml version='1.0'?><osm>"
+        "<bounds minlat='1' minlon='0' maxlat='1' maxlon='1'/>"
+        "</osm>";
+    EXPECT_THROW(RouteModel model(ToBytes(kDegenerateBoundsOsm)), std::logic_error);
+}
+
 // AdjustCoordinates normalizes every node relative to the map bounds and
 // scales by the smaller of the projected width/height (MetricScale), so
 // the min-bound node must land exactly at the origin and the max-bound
