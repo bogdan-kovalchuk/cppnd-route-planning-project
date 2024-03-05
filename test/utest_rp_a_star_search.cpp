@@ -490,6 +490,16 @@ TEST(RoutePlannerSyntheticTest, ModelRejectsDegenerateBounds) {
     EXPECT_THROW(RouteModel model(ToBytes(kDegenerateBoundsOsm)), std::logic_error);
 }
 
+// Web Mercator is unbounded at the geographic poles, so an otherwise
+// increasing bounds box that reaches a pole cannot produce finite geometry.
+TEST(RoutePlannerSyntheticTest, ModelRejectsPolarBounds) {
+    static const char *kPolarBoundsOsm =
+        "<?xml version='1.0'?><osm>"
+        "<bounds minlat='0' minlon='0' maxlat='90' maxlon='1'/>"
+        "</osm>";
+    EXPECT_THROW(RouteModel model(ToBytes(kPolarBoundsOsm)), std::logic_error);
+}
+
 // AdjustCoordinates normalizes every node relative to the map bounds and
 // scales by the smaller of the projected width/height (MetricScale), so
 // the min-bound node must land exactly at the origin and the max-bound

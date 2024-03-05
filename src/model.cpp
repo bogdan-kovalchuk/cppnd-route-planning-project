@@ -210,7 +210,7 @@ void Model::LoadData(const std::vector<std::byte> &xml)
 
 void Model::AdjustCoordinates()
 {    
-    if (m_MinLat < -90.0 || m_MaxLat > 90.0 ||
+    if (m_MinLat <= -90.0 || m_MaxLat >= 90.0 ||
         m_MinLon < -180.0 || m_MaxLon > 180.0 ||
         m_MinLat >= m_MaxLat || m_MinLon >= m_MaxLon)
         throw std::logic_error("map bounds do not define a valid area");
