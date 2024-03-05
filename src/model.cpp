@@ -104,8 +104,8 @@ void Model::LoadData(const std::vector<std::byte> &xml)
     for( const auto &node: doc.select_nodes("/osm/node") ) {
         node_id_to_num[node.node().attribute("id").as_string()] = (int)m_Nodes.size();
         m_Nodes.emplace_back();        
-        m_Nodes.back().y = atof(node.node().attribute("lat").as_string());
-        m_Nodes.back().x = atof(node.node().attribute("lon").as_string());
+        m_Nodes.back().y = ParseFiniteNumber(node.node().attribute("lat"), "node latitude");
+        m_Nodes.back().x = ParseFiniteNumber(node.node().attribute("lon"), "node longitude");
     }
 
     std::unordered_map<std::string, int> way_id_to_num;    

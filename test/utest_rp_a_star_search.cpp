@@ -500,6 +500,17 @@ TEST(RoutePlannerSyntheticTest, ModelRejectsPolarBounds) {
     EXPECT_THROW(RouteModel model(ToBytes(kPolarBoundsOsm)), std::logic_error);
 }
 
+// A malformed node coordinate used to fall back to zero and silently change
+// topology. It must be rejected before coordinate normalization runs.
+TEST(RoutePlannerSyntheticTest, ModelRejectsNonNumericNodeCoordinates) {
+    static const char *kInvalidNodeOsm =
+        "<?xml version='1.0'?><osm>"
+        "<bounds minlat='0' minlon='0' maxlat='1' maxlon='1'/>"
+        "<node id='1' lat='north' lon='0.5'/>"
+        "</osm>";
+    EXPECT_THROW(RouteModel model(ToBytes(kInvalidNodeOsm)), std::logic_error);
+}
+
 // AdjustCoordinates normalizes every node relative to the map bounds and
 // scales by the smaller of the projected width/height (MetricScale), so
 // the min-bound node must land exactly at the origin and the max-bound
