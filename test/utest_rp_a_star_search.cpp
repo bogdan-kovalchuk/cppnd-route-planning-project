@@ -200,6 +200,15 @@ TEST_F(RoutePlannerTest, TestConstructFinalPathSingleNode) {
     EXPECT_FLOAT_EQ(route_planner.GetDistance(), 0.0f);
 }
 
+TEST_F(RoutePlannerTest, TestAddNeighborsGValue) {
+    start_node->g_value = 0.0f;
+    route_planner.AddNeighbors(start_node);
+    for (auto neighbor : start_node->neighbors) {
+        float expected_g = start_node->g_value + start_node->distance(*neighbor);
+        EXPECT_FLOAT_EQ(neighbor->g_value, expected_g);
+    }
+}
+
 TEST_F(RoutePlannerTest, TestAStarSearch) {
     route_planner.AStarSearch();
     EXPECT_EQ(model.path.size(), 33);
