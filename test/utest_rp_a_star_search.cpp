@@ -209,6 +209,15 @@ TEST_F(RoutePlannerTest, TestAddNeighborsGValue) {
     }
 }
 
+TEST_F(RoutePlannerTest, TestAStarPathOrdering) {
+    route_planner.AStarSearch();
+    EXPECT_GE(model.path.size(), 2);
+    EXPECT_FLOAT_EQ(model.path.front().x, start_node->x);
+    EXPECT_FLOAT_EQ(model.path.front().y, start_node->y);
+    EXPECT_FLOAT_EQ(model.path.back().x, end_node->x);
+    EXPECT_FLOAT_EQ(model.path.back().y, end_node->y);
+}
+
 TEST_F(RoutePlannerTest, TestAStarSearch) {
     route_planner.AStarSearch();
     EXPECT_EQ(model.path.size(), 33);
