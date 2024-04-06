@@ -511,6 +511,26 @@ TEST(RoutePlannerSyntheticTest, ModelRejectsNonNumericNodeCoordinates) {
     EXPECT_THROW(RouteModel model(ToBytes(kInvalidNodeOsm)), std::logic_error);
 }
 
+// Node and way references are keyed by OSM id. Reusing an id would silently
+// redirect later references, so malformed duplicate identifiers are rejected.
+TEST(RoutePlannerSyntheticTest, ModelRejectsDuplicateOsmIdentifiers) {
+    static const char *kDuplicateNodeOsm =
+        "<?xml version='1.0'?><osm>"
+        "<bounds minlat='0' minlon='0' maxlat='1' maxlon='1'/>"
+        "<node id='1' lat='0.1' lon='0.1'/>"
+        "<node id='1' lat='0.2' lon='0.2'/>"
+        "</osm>";
+    static const char *kDuplicateWayOsm =
+        "<?xml version='1.0'?><osm>"
+        "<bounds minlat='0' minlon='0' maxlat='1' maxlon='1'/>"
+        "<node id='1' lat='0.1' lon='0.1'/><node id='2' lat='0.2' lon='0.2'/>"
+        "<way id='10'><nd ref='1'/><nd ref='2'/></way>"
+        "<way id='10'><nd ref='2'/><nd ref='1'/></way>"
+        "</osm>";
+    EXPECT_THROW(RouteModel model(ToBytes(kDuplicateNodeOsm)), std::logic_error);
+    EXPECT_THROW(RouteModel model(ToBytes(kDuplicateWayOsm)), std::logic_error);
+}
+
 // AdjustCoordinates normalizes every node relative to the map bounds and
 // scales by the smaller of the projected width/height (MetricScale), so
 // the min-bound node must land exactly at the origin and the max-bound

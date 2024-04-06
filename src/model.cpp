@@ -102,7 +102,9 @@ void Model::LoadData(const std::vector<std::byte> &xml)
 
     std::unordered_map<std::string, int> node_id_to_num;
     for( const auto &node: doc.select_nodes("/osm/node") ) {
-        node_id_to_num[node.node().attribute("id").as_string()] = (int)m_Nodes.size();
+        const std::string node_id = node.node().attribute("id").as_string();
+        if (node_id.empty() || !node_id_to_num.emplace(node_id, (int)m_Nodes.size()).second)
+            throw std::logic_error("node id is missing or duplicated");
         m_Nodes.emplace_back();        
         m_Nodes.back().y = ParseFiniteNumber(node.node().attribute("lat"), "node latitude");
         m_Nodes.back().x = ParseFiniteNumber(node.node().attribute("lon"), "node longitude");
@@ -113,7 +115,9 @@ void Model::LoadData(const std::vector<std::byte> &xml)
         auto node = way.node();
         
         const auto way_num = (int)m_Ways.size();
-        way_id_to_num[node.attribute("id").as_string()] = way_num;
+        const std::string way_id = node.attribute("id").as_string();
+        if (way_id.empty() || !way_id_to_num.emplace(way_id, way_num).second)
+            throw std::logic_error("way id is missing or duplicated");
         m_Ways.emplace_back();
         auto &new_way = m_Ways.back();
         
