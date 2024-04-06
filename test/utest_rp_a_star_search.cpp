@@ -531,6 +531,19 @@ TEST(RoutePlannerSyntheticTest, ModelRejectsDuplicateOsmIdentifiers) {
     EXPECT_THROW(RouteModel model(ToBytes(kDuplicateWayOsm)), std::logic_error);
 }
 
+// One way must have one routable road class. Multiple recognized highway tags
+// previously inserted duplicate edges into the routing graph.
+TEST(RoutePlannerSyntheticTest, ModelRejectsDuplicateHighwayTags) {
+    static const char *kDuplicateHighwayOsm =
+        "<?xml version='1.0'?><osm>"
+        "<bounds minlat='0' minlon='0' maxlat='1' maxlon='1'/>"
+        "<node id='1' lat='0.1' lon='0.1'/><node id='2' lat='0.2' lon='0.2'/>"
+        "<way id='10'><nd ref='1'/><nd ref='2'/>"
+        "<tag k='highway' v='residential'/><tag k='highway' v='service'/></way>"
+        "</osm>";
+    EXPECT_THROW(RouteModel model(ToBytes(kDuplicateHighwayOsm)), std::logic_error);
+}
+
 // AdjustCoordinates normalizes every node relative to the map bounds and
 // scales by the smaller of the projected width/height (MetricScale), so
 // the min-bound node must land exactly at the origin and the max-bound

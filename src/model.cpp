@@ -7,6 +7,7 @@
 #include <cerrno>
 #include <cstdlib>
 #include <stdexcept>
+#include <optional>
 #include <assert.h>
 
 static Model::Road::Type String2RoadType(std::string_view type)
@@ -120,6 +121,7 @@ void Model::LoadData(const std::vector<std::byte> &xml)
             throw std::logic_error("way id is missing or duplicated");
         m_Ways.emplace_back();
         auto &new_way = m_Ways.back();
+        std::optional<Road::Type> road_type;
         
         for( auto child: node.children() ) {
             auto name = std::string_view{child.name()}; 
@@ -132,10 +134,10 @@ void Model::LoadData(const std::vector<std::byte> &xml)
                 auto category = std::string_view{child.attribute("k").as_string()};
                 auto type = std::string_view{child.attribute("v").as_string()};
                 if( category == "highway" ) {
-                    if( auto road_type = String2RoadType(type); road_type != Road::Invalid ) {
-                        m_Roads.emplace_back();
-                        m_Roads.back().way = way_num;
-                        m_Roads.back().type = road_type;
+                    if( auto parsed_type = String2RoadType(type); parsed_type != Road::Invalid ) {
+                        if (road_type)
+                            throw std::logic_error("way has duplicate highway tags");
+                        road_type = parsed_type;
                     }
                 }
                 if( category == "railway" ) {
@@ -165,6 +167,8 @@ void Model::LoadData(const std::vector<std::byte> &xml)
                 }
             }
         }
+        if (road_type)
+            m_Roads.push_back({way_num, *road_type});
     }
     
     for( const auto &relation: doc.select_nodes("/osm/relation") ) {
