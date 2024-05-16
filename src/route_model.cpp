@@ -1,6 +1,14 @@
 #include "route_model.h"
+#include <algorithm>
+#include <functional>
 #include <iostream>
 #include <stdexcept>
+
+static bool HasTraversableSegment(const Model::Way &way)
+{
+    return std::adjacent_find(way.nodes.begin(), way.nodes.end(),
+                              std::not_equal_to<int>()) != way.nodes.end();
+}
 
 RouteModel::RouteModel(const std::vector<std::byte> &xml) : Model(xml) {
     // Create RouteModel nodes.
@@ -15,13 +23,15 @@ RouteModel::RouteModel(const std::vector<std::byte> &xml) : Model(xml) {
 
 void RouteModel::CreateNodeToRoadHashmap() {
     for (const Model::Road &road : Roads()) {
-        if (road.type != Model::Road::Type::Footway) {
-            for (int node_idx : Ways()[road.way].nodes) {
-                if (node_to_road.find(node_idx) == node_to_road.end()) {
-                    node_to_road[node_idx] = std::vector<const Model::Road *> ();
-                }
-                node_to_road[node_idx].push_back(&road);
+        const auto &way = Ways()[road.way];
+        if (road.type == Model::Road::Type::Footway || !HasTraversableSegment(way))
+            continue;
+
+        for (int node_idx : way.nodes) {
+            if (node_to_road.find(node_idx) == node_to_road.end()) {
+                node_to_road[node_idx] = std::vector<const Model::Road *> ();
             }
+            node_to_road[node_idx].push_back(&road);
         }
     }
 }
@@ -66,13 +76,15 @@ RouteModel::Node &RouteModel::FindClosestNode(float x, float y) {
     Node *closest_node = nullptr;
 
     for (const Model::Road &road : Roads()) {
-        if (road.type != Model::Road::Type::Footway) {
-            for (int node_idx : Ways()[road.way].nodes) {
-                dist = input.distance(SNodes()[node_idx]);
-                if (dist < min_dist) {
-                    closest_node = &SNodes()[node_idx];
-                    min_dist = dist;
-                }
+        const auto &way = Ways()[road.way];
+        if (road.type == Model::Road::Type::Footway || !HasTraversableSegment(way))
+            continue;
+
+        for (int node_idx : way.nodes) {
+            dist = input.distance(SNodes()[node_idx]);
+            if (dist < min_dist) {
+                closest_node = &SNodes()[node_idx];
+                min_dist = dist;
             }
         }
     }

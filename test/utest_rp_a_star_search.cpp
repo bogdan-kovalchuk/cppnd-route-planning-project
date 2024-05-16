@@ -603,6 +603,7 @@ TEST(RoutePlannerSyntheticTest, SingleNodeWayHasNoNeighbors) {
     ASSERT_EQ(model.SNodes().size(), 1u);
     model.SNodes()[0].FindNeighbors();
     EXPECT_TRUE(model.SNodes()[0].neighbors.empty());
+    EXPECT_THROW(model.FindClosestNode(0.1f, 0.1f), std::logic_error);
 }
 
 // The first route to node N is deliberately longer than a route discovered
