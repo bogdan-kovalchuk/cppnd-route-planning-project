@@ -47,7 +47,8 @@ void RouteModel::Node::FindNeighbors() {
         if (node_index == index)
             return;
         Node &node = parent_model->SNodes()[node_index];
-        if (!node.visited)
+        if (!node.visited &&
+            std::find(neighbors.begin(), neighbors.end(), &node) == neighbors.end())
             neighbors.emplace_back(&node);
     };
 

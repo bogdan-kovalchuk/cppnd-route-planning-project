@@ -628,6 +628,23 @@ TEST(RoutePlannerSyntheticTest, MiddleOfWayConnectsToBothAdjacentNodes) {
     EXPECT_EQ(middle.neighbors[1], &model.SNodes()[2]);
 }
 
+// Parallel OSM ways can describe the same graph edge. Neighbor discovery
+// exposes that destination once so expansion does not process it repeatedly.
+TEST(RoutePlannerSyntheticTest, OverlappingWaysDoNotDuplicateNeighbors) {
+    static const char *kOverlappingWaysOsm =
+        "<?xml version='1.0'?><osm>"
+        "<bounds minlat='0' minlon='0' maxlat='1' maxlon='1'/>"
+        "<node id='1' lat='0.1' lon='0.1'/><node id='2' lat='0.2' lon='0.2'/>"
+        "<way id='100'><nd ref='1'/><nd ref='2'/><tag k='highway' v='residential'/></way>"
+        "<way id='101'><nd ref='1'/><nd ref='2'/><tag k='highway' v='service'/></way>"
+        "</osm>";
+    RouteModel model(ToBytes(kOverlappingWaysOsm));
+    model.SNodes()[0].FindNeighbors();
+
+    ASSERT_EQ(model.SNodes()[0].neighbors.size(), 1u);
+    EXPECT_EQ(model.SNodes()[0].neighbors.front(), &model.SNodes()[1]);
+}
+
 // The first route to node N is deliberately longer than a route discovered
 // one expansion later. Correct A* must relax N while it is still open.
 TEST(RoutePlannerSyntheticTest, AStarRelaxesAnOpenNodeToTheOptimalRoute) {
