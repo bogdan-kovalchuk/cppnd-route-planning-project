@@ -306,8 +306,11 @@ void Model::BuildRings( Multipolygon &mp )
         auto ways = m_Ways.data();
         std::vector<int> closed, open;
         
-        for( auto &way_num: ways_nums )
-            (is_closed(ways[way_num]) ? closed : open).emplace_back(way_num);  
+        for( auto &way_num: ways_nums ) {
+            if (ways[way_num].nodes.size() < 2)
+                continue;
+            (is_closed(ways[way_num]) ? closed : open).emplace_back(way_num);
+        }
         
         while( !open.empty() ) {            
             auto new_nodes = Track(open, ways);

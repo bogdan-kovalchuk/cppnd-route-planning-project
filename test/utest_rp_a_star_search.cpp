@@ -339,6 +339,23 @@ TEST(RoutePlannerSyntheticTest, BuildRingsDropsUnclosableRing) {
     EXPECT_TRUE(model.Landuses()[0].outer.empty());
 }
 
+// A relation member can lose all node references during parsing. Ring assembly
+// must ignore it rather than calling front() on an empty way while backtracking.
+TEST(RoutePlannerSyntheticTest, BuildRingsIgnoresDegenerateMembers) {
+    static const char *kDegenerateRingOsm =
+        "<?xml version='1.0'?><osm>"
+        "<bounds minlat='0' minlon='0' maxlat='1' maxlon='1'/>"
+        "<node id='1' lat='0.1' lon='0.1'/><node id='2' lat='0.2' lon='0.2'/>"
+        "<way id='100'><nd ref='missing'/></way>"
+        "<way id='101'><nd ref='1'/><nd ref='2'/></way>"
+        "<relation id='500'><member type='way' ref='100' role='outer'/>"
+        "<member type='way' ref='101' role='outer'/><tag k='landuse' v='grass'/></relation>"
+        "</osm>";
+    RouteModel model(ToBytes(kDegenerateRingOsm));
+    ASSERT_EQ(model.Landuses().size(), 1u);
+    EXPECT_TRUE(model.Landuses()[0].outer.empty());
+}
+
 // When several open-list nodes share the same FValue, NextNode uses the
 // stable model index as an explicit tie-break and drains them in that order.
 TEST_F(RoutePlannerTest, TestNextNodeHandlesTiedFValues) {
