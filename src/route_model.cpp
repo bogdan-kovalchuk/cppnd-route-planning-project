@@ -37,27 +37,29 @@ void RouteModel::CreateNodeToRoadHashmap() {
 }
 
 
-RouteModel::Node *RouteModel::Node::FindNeighbor(std::vector<int> node_indices) {
-    Node *closest_node = nullptr;
-
-    for (int node_index : node_indices) {
-        Node &node = parent_model->SNodes()[node_index];
-        if (this->distance(node) != 0 && !node.visited) {
-            if (closest_node == nullptr || this->distance(node) < this->distance(*closest_node)) {
-                closest_node = &parent_model->SNodes()[node_index];
-            }
-        }
-    }
-    return closest_node;
-}
-
-
 void RouteModel::Node::FindNeighbors() {
     neighbors.clear();
-    for (auto & road : parent_model->node_to_road[this->index]) {
-        RouteModel::Node *new_neighbor = this->FindNeighbor(parent_model->Ways()[road->way].nodes);
-        if (new_neighbor) {
-            this->neighbors.emplace_back(new_neighbor);
+    auto roads = parent_model->node_to_road.find(index);
+    if (roads == parent_model->node_to_road.end())
+        return;
+
+    auto add_neighbor = [this](int node_index) {
+        if (node_index == index)
+            return;
+        Node &node = parent_model->SNodes()[node_index];
+        if (!node.visited)
+            neighbors.emplace_back(&node);
+    };
+
+    for (const auto *road : roads->second) {
+        const auto &nodes = parent_model->Ways()[road->way].nodes;
+        for (size_t i = 0; i < nodes.size(); ++i) {
+            if (nodes[i] != index)
+                continue;
+            if (i > 0)
+                add_neighbor(nodes[i - 1]);
+            if (i + 1 < nodes.size())
+                add_neighbor(nodes[i + 1]);
         }
     }
 }

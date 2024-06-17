@@ -236,7 +236,9 @@ TEST_F(RoutePlannerTest, TestAStarPathOrdering) {
 
 TEST_F(RoutePlannerTest, TestAStarSearch) {
     route_planner.AStarSearch();
-    EXPECT_EQ(model.path.size(), 34u);
+    // The graph preserves every adjacent OSM segment, so the path retains
+    // intermediate vertices rather than jumping across a whole way.
+    EXPECT_EQ(model.path.size(), 70u);
     RouteModel::Node path_start = model.path.front();
     RouteModel::Node path_end = model.path.back();
     // The start_node and end_node x, y values should be the same as in the path.
@@ -244,7 +246,7 @@ TEST_F(RoutePlannerTest, TestAStarSearch) {
     EXPECT_FLOAT_EQ(start_node->y, path_start.y);
     EXPECT_FLOAT_EQ(end_node->x, path_end.x);
     EXPECT_FLOAT_EQ(end_node->y, path_end.y);
-    EXPECT_FLOAT_EQ(route_planner.GetDistance(), 872.61725f);
+    EXPECT_FLOAT_EQ(route_planner.GetDistance(), 839.26294f);
 }
 
 TEST_F(RoutePlannerTest, TestFValueComputation) {
@@ -604,6 +606,26 @@ TEST(RoutePlannerSyntheticTest, SingleNodeWayHasNoNeighbors) {
     model.SNodes()[0].FindNeighbors();
     EXPECT_TRUE(model.SNodes()[0].neighbors.empty());
     EXPECT_THROW(model.FindClosestNode(0.1f, 0.1f), std::logic_error);
+}
+
+// A node in the middle of one OSM way must connect to both adjacent vertices.
+// Choosing just the geometrically nearest vertex leaves one direction trapped.
+TEST(RoutePlannerSyntheticTest, MiddleOfWayConnectsToBothAdjacentNodes) {
+    static const char *kThreeNodeWayOsm =
+        "<?xml version='1.0'?><osm>"
+        "<bounds minlat='0' minlon='0' maxlat='1' maxlon='1'/>"
+        "<node id='1' lat='0.1' lon='0.1'/><node id='2' lat='0.2' lon='0.2'/>"
+        "<node id='3' lat='0.3' lon='0.3'/>"
+        "<way id='100'><nd ref='1'/><nd ref='2'/><nd ref='3'/>"
+        "<tag k='highway' v='residential'/></way>"
+        "</osm>";
+    RouteModel model(ToBytes(kThreeNodeWayOsm));
+    auto &middle = model.SNodes()[1];
+    middle.FindNeighbors();
+
+    ASSERT_EQ(middle.neighbors.size(), 2u);
+    EXPECT_EQ(middle.neighbors[0], &model.SNodes()[0]);
+    EXPECT_EQ(middle.neighbors[1], &model.SNodes()[2]);
 }
 
 // The first route to node N is deliberately longer than a route discovered
