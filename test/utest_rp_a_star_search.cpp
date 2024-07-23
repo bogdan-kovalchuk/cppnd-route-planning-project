@@ -230,3 +230,18 @@ TEST_F(RoutePlannerTest, TestAStarSearch) {
     EXPECT_FLOAT_EQ(end_node->y, path_end.y);
     EXPECT_FLOAT_EQ(route_planner.GetDistance(), 873.41565);
 }
+
+TEST_F(RoutePlannerTest, TestFValueComputation) {
+    start_node->g_value = 1.0f;
+    start_node->h_value = 2.0f;
+    EXPECT_FLOAT_EQ(FValue(start_node), 3.0f);
+}
+
+TEST_F(RoutePlannerTest, TestFValueMatchesCompare) {
+    start_node->g_value = 1.0f;
+    start_node->h_value = 2.0f;
+    end_node->g_value = 0.5f;
+    end_node->h_value = 0.5f;
+    EXPECT_GT(FValue(start_node), FValue(end_node));
+    EXPECT_TRUE(Compare(start_node, end_node));
+}

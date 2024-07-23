@@ -44,10 +44,12 @@ void RoutePlanner::AddNeighbors(RouteModel::Node *current_node) {
     }
 }
 
+float FValue(const RouteModel::Node *node) {
+    return node->g_value + node->h_value;
+}
+
 bool Compare(const RouteModel::Node *a, RouteModel::Node *b) {
-    float f1 = a->g_value + a->h_value;
-    float f2 = b->g_value + b->h_value;
-    return f1 > f2;
+    return FValue(a) > FValue(b);
 }
 
 // TODO 5: Complete the NextNode method to sort the open list and return the next node.

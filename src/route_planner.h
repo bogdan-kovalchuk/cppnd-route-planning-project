@@ -31,5 +31,6 @@ class RoutePlanner {
 };
 
 bool Compare(const RouteModel::Node *a, RouteModel::Node *b);
+float FValue(const RouteModel::Node *node);
 
 #endif
