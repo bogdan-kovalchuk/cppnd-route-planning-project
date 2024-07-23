@@ -37,6 +37,22 @@ static Model::Landuse::Type String2LanduseType(std::string_view type)
     return Model::Landuse::Invalid;
 }
 
+const char* Model::RoadTypeToString(Road::Type type)
+{
+    switch(type) {
+        case Road::Motorway:     return "motorway";
+        case Road::Trunk:        return "trunk";
+        case Road::Primary:      return "primary";
+        case Road::Secondary:    return "secondary";
+        case Road::Tertiary:     return "tertiary";
+        case Road::Residential:  return "residential";
+        case Road::Service:      return "service";
+        case Road::Unclassified: return "unclassified";
+        case Road::Footway:      return "footway";
+        default:                 return "invalid";
+    }
+}
+
 Model::Model( const std::vector<std::byte> &xml )
 {
     LoadData(xml);

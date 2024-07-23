@@ -46,6 +46,8 @@ public:
     
     Model( const std::vector<std::byte> &xml );
     
+    static const char* RoadTypeToString(Road::Type type);
+    
     auto MetricScale() const noexcept { return m_MetricScale; }    
     
     auto &Nodes() const noexcept { return m_Nodes; }

@@ -245,3 +245,9 @@ TEST_F(RoutePlannerTest, TestFValueMatchesCompare) {
     EXPECT_GT(FValue(start_node), FValue(end_node));
     EXPECT_TRUE(Compare(start_node, end_node));
 }
+
+TEST_F(RoutePlannerTest, TestRoadTypeToString) {
+    EXPECT_STREQ(Model::RoadTypeToString(Model::Road::Motorway), "motorway");
+    EXPECT_STREQ(Model::RoadTypeToString(Model::Road::Footway), "footway");
+    EXPECT_STREQ(Model::RoadTypeToString(Model::Road::Invalid), "invalid");
+}
