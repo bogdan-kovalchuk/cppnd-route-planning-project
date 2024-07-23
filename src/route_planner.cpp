@@ -48,6 +48,14 @@ float FValue(const RouteModel::Node *node) {
     return node->g_value + node->h_value;
 }
 
+float PathDistance(const std::vector<RouteModel::Node> &path) {
+    float dist = 0.0f;
+    for (size_t i = 1; i < path.size(); i++) {
+        dist += path[i].distance(path[i - 1]);
+    }
+    return dist;
+}
+
 bool Compare(const RouteModel::Node *a, RouteModel::Node *b) {
     return FValue(a) > FValue(b);
 }

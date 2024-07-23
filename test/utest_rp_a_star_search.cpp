@@ -251,3 +251,14 @@ TEST_F(RoutePlannerTest, TestRoadTypeToString) {
     EXPECT_STREQ(Model::RoadTypeToString(Model::Road::Footway), "footway");
     EXPECT_STREQ(Model::RoadTypeToString(Model::Road::Invalid), "invalid");
 }
+
+TEST_F(RoutePlannerTest, TestPathDistanceEmpty) {
+    std::vector<RouteModel::Node> empty_path;
+    EXPECT_FLOAT_EQ(PathDistance(empty_path), 0.0f);
+}
+
+TEST_F(RoutePlannerTest, TestPathDistanceMatchesSearch) {
+    route_planner.AStarSearch();
+    float manual = PathDistance(model.path) * model.MetricScale();
+    EXPECT_FLOAT_EQ(route_planner.GetDistance(), manual);
+}
