@@ -271,9 +271,9 @@ static bool TrackRec(const std::vector<int> &open_ways,
                     used[i] = true;
                     const auto len = nodes.size();
                     if( way_head == tail ) 
-                        nodes.insert(nodes.end(), way_nodes.begin(), way_nodes.end());
+                        nodes.insert(nodes.end(), way_nodes.begin() + 1, way_nodes.end());
                     else
-                        nodes.insert(nodes.end(), way_nodes.rbegin(), way_nodes.rend());
+                        nodes.insert(nodes.end(), way_nodes.rbegin() + 1, way_nodes.rend());
                     if( TrackRec(open_ways, ways, used, nodes) )
                         return true;
                     nodes.resize(len);                    

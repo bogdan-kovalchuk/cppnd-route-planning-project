@@ -383,6 +383,27 @@ TEST(RoutePlannerSyntheticTest, BuildRingsKeepsMultipleAssembledRings) {
     }
 }
 
+// Joined ways share an endpoint. The synthetic ring keeps that vertex once,
+// avoiding a zero-length segment at every join.
+TEST(RoutePlannerSyntheticTest, BuildRingsDoesNotDuplicateJoinVertices) {
+    static const char *kSplitRingOsm =
+        "<?xml version='1.0'?><osm>"
+        "<bounds minlat='0' minlon='0' maxlat='1' maxlon='1'/>"
+        "<node id='1' lat='0.1' lon='0.1'/><node id='2' lat='0.2' lon='0.1'/>"
+        "<way id='100'><nd ref='1'/><nd ref='2'/></way>"
+        "<way id='101'><nd ref='2'/><nd ref='1'/></way>"
+        "<relation id='500'><member type='way' ref='100' role='outer'/>"
+        "<member type='way' ref='101' role='outer'/><tag k='landuse' v='grass'/></relation>"
+        "</osm>";
+    RouteModel model(ToBytes(kSplitRingOsm));
+    ASSERT_EQ(model.Landuses().size(), 1u);
+    const auto &ring = model.Ways()[model.Landuses()[0].outer.front()].nodes;
+    ASSERT_EQ(ring.size(), 3u);
+    EXPECT_EQ(ring.front(), ring.back());
+    EXPECT_NE(ring[0], ring[1]);
+    EXPECT_NE(ring[1], ring[2]);
+}
+
 // When several open-list nodes share the same FValue, NextNode uses the
 // stable model index as an explicit tie-break and drains them in that order.
 TEST_F(RoutePlannerTest, TestNextNodeHandlesTiedFValues) {
