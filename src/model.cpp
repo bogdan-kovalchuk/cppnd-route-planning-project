@@ -313,7 +313,7 @@ void Model::BuildRings( Multipolygon &mp )
         }
         
         while( !open.empty() ) {            
-            auto new_nodes = Track(open, ways);
+            auto new_nodes = Track(open, m_Ways.data());
             if( new_nodes.empty() )
                 break;
             open.erase(std::remove_if(open.begin(), open.end(), [](auto v){return v < 0;}), open.end() );
