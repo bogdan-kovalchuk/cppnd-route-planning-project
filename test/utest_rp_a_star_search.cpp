@@ -404,6 +404,27 @@ TEST(RoutePlannerSyntheticTest, BuildRingsDoesNotDuplicateJoinVertices) {
     EXPECT_NE(ring[1], ring[2]);
 }
 
+// Building relations use the same outer/inner way representation as water
+// and landuse relations, so split building outlines need ring assembly too.
+TEST(RoutePlannerSyntheticTest, BuildRingsAssemblesBuildingRelations) {
+    static const char *kSplitBuildingOsm =
+        "<?xml version='1.0'?><osm>"
+        "<bounds minlat='0' minlon='0' maxlat='1' maxlon='1'/>"
+        "<node id='1' lat='0.1' lon='0.1'/><node id='2' lat='0.2' lon='0.1'/>"
+        "<way id='100'><nd ref='1'/><nd ref='2'/></way>"
+        "<way id='101'><nd ref='2'/><nd ref='1'/></way>"
+        "<relation id='500'><member type='way' ref='100' role='outer'/>"
+        "<member type='way' ref='101' role='outer'/><tag k='building' v='yes'/></relation>"
+        "</osm>";
+    RouteModel model(ToBytes(kSplitBuildingOsm));
+    ASSERT_EQ(model.Buildings().size(), 1u);
+    const auto &outer = model.Buildings()[0].outer;
+    ASSERT_EQ(outer.size(), 1u);
+    const auto &ring = model.Ways()[outer.front()].nodes;
+    EXPECT_EQ(ring.size(), 3u);
+    EXPECT_EQ(ring.front(), ring.back());
+}
+
 // When several open-list nodes share the same FValue, NextNode uses the
 // stable model index as an explicit tie-break and drains them in that order.
 TEST_F(RoutePlannerTest, TestNextNodeHandlesTiedFValues) {

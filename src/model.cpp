@@ -196,6 +196,7 @@ void Model::LoadData(const std::vector<std::byte> &xml)
                 auto type = std::string_view{child.attribute("v").as_string()};
                 if( category == "building" ) {
                     commit( m_Buildings.emplace_back() );
+                    BuildRings(m_Buildings.back());
                     break;
                 }
                 if( category == "natural" && type == "water" ) {
