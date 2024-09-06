@@ -34,6 +34,10 @@ class RouteModel : public Model {
     };
 
     RouteModel(const std::vector<std::byte> &xml);
+    RouteModel(const RouteModel &) = delete;
+    RouteModel &operator=(const RouteModel &) = delete;
+    RouteModel(RouteModel &&) = delete;
+    RouteModel &operator=(RouteModel &&) = delete;
     Node &FindClosestNode(float x, float y);
     auto &SNodes() { return m_Nodes; }
     std::vector<Node> path;

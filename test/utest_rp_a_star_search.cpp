@@ -5,6 +5,7 @@
 #include <iostream>
 #include <optional>
 #include <stdexcept>
+#include <type_traits>
 #include <vector>
 #include "../src/route_model.h"
 #include "../src/route_planner.h"
@@ -750,6 +751,15 @@ TEST(RoutePlannerSyntheticTest, OverlappingWaysDoNotDuplicateNeighbors) {
 
     ASSERT_EQ(model.SNodes()[0].neighbors.size(), 1u);
     EXPECT_EQ(model.SNodes()[0].neighbors.front(), &model.SNodes()[1]);
+}
+
+// RouteModel nodes and road entries retain pointers into their owning model.
+// Default copying or moving would leave those pointers bound to another object.
+TEST(RoutePlannerSyntheticTest, RouteModelDisallowsCopyingAndMoving) {
+    EXPECT_FALSE((std::is_copy_constructible<RouteModel>::value));
+    EXPECT_FALSE((std::is_copy_assignable<RouteModel>::value));
+    EXPECT_FALSE((std::is_move_constructible<RouteModel>::value));
+    EXPECT_FALSE((std::is_move_assignable<RouteModel>::value));
 }
 
 // The first route to node N is deliberately longer than a route discovered
