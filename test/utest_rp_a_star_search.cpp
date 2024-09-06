@@ -155,6 +155,14 @@ TEST_F(RoutePlannerTest, TestFindClosestNodeValid) {
     EXPECT_LE(node.y, 1.0f);
 }
 
+// Planner inputs are percentages into the normalized map. Reject invalid
+// values before they can propagate into endpoint selection and heuristics.
+TEST_F(RoutePlannerTest, TestRoutePlannerRejectsInvalidCoordinates) {
+    EXPECT_THROW(RoutePlanner(model, std::numeric_limits<float>::quiet_NaN(), 0, 0, 0),
+                 std::invalid_argument);
+    EXPECT_THROW(RoutePlanner(model, 0, 0, 101, 0), std::invalid_argument);
+}
+
 TEST_F(RoutePlannerTest, TestAddNeighborsKeepsOpenNodesUnvisited) {
     mid_node->g_value = 0.0f;
     route_planner.AddNeighbors(mid_node);

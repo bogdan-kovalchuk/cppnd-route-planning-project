@@ -1,9 +1,20 @@
 #include "route_planner.h"
 #include <algorithm>
+#include <cmath>
 #include <limits>
+#include <stdexcept>
 #include <unordered_set>
 
 RoutePlanner::RoutePlanner(RouteModel &model, float start_x, float start_y, float end_x, float end_y) : m_Model(model) {
+    if (!std::isfinite(start_x) || !std::isfinite(start_y) ||
+        !std::isfinite(end_x) || !std::isfinite(end_y))
+        throw std::invalid_argument("route coordinates must be finite");
+    if (start_x < 0.0f || start_x > 100.0f ||
+        start_y < 0.0f || start_y > 100.0f ||
+        end_x < 0.0f || end_x > 100.0f ||
+        end_y < 0.0f || end_y > 100.0f)
+        throw std::invalid_argument("route coordinates must be percentages");
+
     // Convert inputs to percentage:
     start_x *= 0.01;
     start_y *= 0.01;
