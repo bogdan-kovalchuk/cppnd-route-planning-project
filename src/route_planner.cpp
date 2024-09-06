@@ -1,6 +1,7 @@
 #include "route_planner.h"
 #include <algorithm>
 #include <limits>
+#include <unordered_set>
 
 RoutePlanner::RoutePlanner(RouteModel &model, float start_x, float start_y, float end_x, float end_y) : m_Model(model) {
     // Convert inputs to percentage:
@@ -95,16 +96,24 @@ RouteModel::Node *RoutePlanner::NextNode() {
 //   of the vector, the end node should be the last element.
 
 std::vector<RouteModel::Node> RoutePlanner::ConstructFinalPath(RouteModel::Node *current_node) {
-    // Create path_found vector
     distance = 0.0f;
     std::vector<RouteModel::Node> path_found;
+    std::unordered_set<RouteModel::Node *> chain;
     while (current_node != start_node) {
-        path_found.insert(path_found.begin(), *current_node);
-        if (!current_node->parent) break;
+        if (!current_node || !chain.insert(current_node).second) {
+            distance = 0.0f;
+            return {};
+        }
+        path_found.push_back(*current_node);
+        if (!current_node->parent) {
+            distance = 0.0f;
+            return {};
+        }
         distance += current_node->distance(*current_node->parent);
         current_node = current_node->parent;
     }
-    path_found.insert(path_found.begin(), *start_node);
+    path_found.push_back(*start_node);
+    std::reverse(path_found.begin(), path_found.end());
     distance *= m_Model.MetricScale(); // Multiply the distance by the scale of the map to get meters.
     return path_found;
 }

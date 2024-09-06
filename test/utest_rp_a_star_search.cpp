@@ -216,6 +216,19 @@ TEST_F(RoutePlannerTest, TestConstructFinalPathSingleNode) {
     EXPECT_FLOAT_EQ(route_planner.GetDistance(), 0.0f);
 }
 
+// ConstructFinalPath is public for focused use. It must not manufacture a
+// route from an orphan chain or loop indefinitely on a cyclic parent chain.
+TEST_F(RoutePlannerTest, TestConstructFinalPathRejectsInvalidParentChains) {
+    mid_node->parent = nullptr;
+    EXPECT_TRUE(route_planner.ConstructFinalPath(mid_node).empty());
+    EXPECT_FLOAT_EQ(route_planner.GetDistance(), 0.0f);
+
+    mid_node->parent = end_node;
+    end_node->parent = mid_node;
+    EXPECT_TRUE(route_planner.ConstructFinalPath(end_node).empty());
+    EXPECT_FLOAT_EQ(route_planner.GetDistance(), 0.0f);
+}
+
 TEST_F(RoutePlannerTest, TestAddNeighborsGValue) {
     start_node->g_value = 0.0f;
     route_planner.AddNeighbors(start_node);
