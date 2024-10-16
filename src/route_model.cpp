@@ -67,6 +67,8 @@ void RouteModel::Node::FindNeighbors() {
 
 
 RouteModel::Node &RouteModel::FindClosestNode(float x, float y) {
+    if (!std::isfinite(x) || !std::isfinite(y))
+        throw std::invalid_argument("closest-node coordinates must be finite");
     if (SNodes().empty())
         throw std::logic_error("RouteModel has no nodes to search");
 

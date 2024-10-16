@@ -3,6 +3,7 @@
 #include <cmath>
 #include <fstream>
 #include <iostream>
+#include <limits>
 #include <optional>
 #include <stdexcept>
 #include <type_traits>
@@ -154,6 +155,13 @@ TEST_F(RoutePlannerTest, TestFindClosestNodeValid) {
     EXPECT_LE(node.x, 1.0f);
     EXPECT_GE(node.y, 0.0f);
     EXPECT_LE(node.y, 1.0f);
+}
+
+TEST_F(RoutePlannerTest, TestFindClosestNodeRejectsNonFiniteCoordinates) {
+    EXPECT_THROW(model.FindClosestNode(std::numeric_limits<float>::quiet_NaN(), 0.5f),
+                 std::invalid_argument);
+    EXPECT_THROW(model.FindClosestNode(0.5f, std::numeric_limits<float>::infinity()),
+                 std::invalid_argument);
 }
 
 // Planner inputs are percentages into the normalized map. Reject invalid
