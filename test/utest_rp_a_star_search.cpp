@@ -109,18 +109,25 @@ TEST_F(RoutePlannerTest, TestAddNeighbors) {
     route_planner.AddNeighbors(start_node);
 
     // Correct h and g values for the neighbors of start_node.
-    std::vector<float> start_neighbor_g_vals{0.10671431, 0.082997195, 0.051776856, 0.055291083};
-    std::vector<float> start_neighbor_h_vals{1.1828455, 1.0998145, 1.0858033, 1.1831238};
+    std::vector<std::pair<float, float>> expected_values{
+        {0.10671431f, 1.1828455f},
+        {0.082997195f, 1.0998145f},
+        {0.051776856f, 1.0858033f},
+        {0.055291083f, 1.1831238f},
+    };
     auto neighbors = start_node->neighbors;
     EXPECT_EQ(neighbors.size(), 4u);
 
     // Check results for each neighbor.
-    for (std::size_t i = 0; i < neighbors.size(); i++) {
-        EXPECT_PRED2(NodesSame, neighbors[i]->parent, start_node);
-        EXPECT_FLOAT_EQ(neighbors[i]->g_value, start_neighbor_g_vals[i]);
-        EXPECT_FLOAT_EQ(neighbors[i]->h_value, start_neighbor_h_vals[i]);
-        EXPECT_FALSE(neighbors[i]->visited);
+    std::vector<std::pair<float, float>> actual_values;
+    for (auto *neighbor : neighbors) {
+        EXPECT_PRED2(NodesSame, neighbor->parent, start_node);
+        actual_values.emplace_back(neighbor->g_value, neighbor->h_value);
+        EXPECT_FALSE(neighbor->visited);
     }
+    std::sort(actual_values.begin(), actual_values.end());
+    std::sort(expected_values.begin(), expected_values.end());
+    EXPECT_EQ(actual_values, expected_values);
 }
 
 
